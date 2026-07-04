@@ -6,6 +6,45 @@ LifeBridge AI is a progressive web application (PWA) designed to provide critica
 
 ---
 
+## 🖥️ Live Project Demo
+
+Below is the live execution of the LifeBridge AI Command Center interface showing the Offline/Online synchronization indicators, the Dynamic Hazard Map centered on active coordinates, and the real-time Crisis Overview showing shelter statuses, SOS signal counts, and active hazards.
+
+![LifeBridge AI Live Demo Screenshot](images/demo_screenshot.png)
+
+---
+
+## 🏗️ System Architecture & Data Flow
+
+LifeBridge AI utilizes a completely decentralized, serverless architecture that operates entirely on client devices:
+
+```mermaid
+graph TD
+    classDef primary fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#fff;
+    classDef secondary fill:#1e293b,stroke:#f59e0b,stroke-width:2px,color:#fff;
+    classDef db fill:#020617,stroke:#10b981,stroke-width:2px,color:#fff;
+    classDef outer fill:#0f172a,stroke:#ef4444,stroke-width:2px,color:#fff;
+
+    User[👤 Responder / Survivor]:::primary
+    UI[🖥️ PWA Command Center UI]:::primary
+    SW[⚙️ Service Worker / Cache]:::secondary
+    DB[(💾 Local Storage DB)]:::db
+    QR[🔌 QR-Code Sync Engine]:::secondary
+    Peer[📡 Peer Responder Device]:::outer
+
+    User <-->|Interacts| UI
+    UI <-->|Loads Assets| SW
+    UI <-->|Queries / Saves| DB
+    UI <-->|Initiates Sync| QR
+    QR <-->|Scan / Display| Peer
+```
+
+- **Service Worker Cache**: Stores HTML, CSS, JavaScript, icons, and guides to allow offline loads.
+- **Local Storage Database**: Stores triage reports, resource ledgers, missing persons registry, and hazard pins locally on the device.
+- **QR Sync Engine**: Converts delta updates into compressed, high-density QR codes for optical transmission, bypassing the need for network access.
+
+---
+
 ## 📸 Workflows & System Overview
 
 ### 1. Crisis Command & Triage Management
