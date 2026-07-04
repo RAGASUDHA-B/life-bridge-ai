@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LifeBridge AI - Emergency Crisis Command Center</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  
+  <!-- Application CSS -->
+  <link rel="stylesheet" href="index.css">
+  
+  <!-- App Manifest for PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#090d16">
+</head>
+<body>
+
+  <!-- Top Glassmorphic Navigation -->
+  <header class="app-header">
+    <div class="logo-container">
+      <div class="pulse-ring"></div>
+      <h1 class="app-title"><span class="accent-text">LifeBridge</span> AI</h1>
+      <span class="badge track-badge">Agents for Good</span>
+    </div>
+    
+    <div class="header-controls">
+      <!-- Network State Indicator -->
+      <div id="network-status" class="status-indicator online">
+        <span class="status-dot"></span>
+        <span class="status-text">ONLINE</span>
+      </div>
+      
+      <!-- Offline Simulator Toggle -->
+      <button id="toggle-network-btn" class="btn btn-secondary btn-small">
+        <i data-lucide="wifi-off"></i> Simulate Offline
+      </button>
+      
+      <!-- QR P2P Sync Trigger -->
+      <button id="trigger-sync-btn" class="btn btn-primary btn-small">
+        <i data-lucide="qr-code"></i> Sync Mesh
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Workspace Grid -->
+  <main class="app-layout">
+    
+    <!-- Sidebar Navigation Tabs -->
+    <nav class="sidebar-nav">
+      <button class="nav-tab active" data-target="panel-map">
+        <i data-lucide="map"></i>
+        <span>Crisis Map</span>
+      </button>
+      <button class="nav-tab" data-target="panel-sos">
+        <i data-lucide="alert-triangle"></i>
+        <span>SOS & Siren</span>
+      </button>
+      <button class="nav-tab" data-target="panel-triage">
+        <i data-lucide="activity"></i>
+        <span>START Triage</span>
+      </button>
+      <button class="nav-tab" data-target="panel-ledger">
+        <i data-lucide="package"></i>
+        <span>Resource Ledger</span>
+      </button>
+      <button class="nav-tab" data-target="panel-registry">
+        <i data-lucide="users"></i>
+        <span>Safety Registry</span>
+      </button>
+      <button class="nav-tab" data-target="panel-guides">
+        <i data-lucide="book-open"></i>
+        <span>Survival Guides</span>
+      </button>
+      <button class="nav-tab" data-target="panel-weather">
+        <i data-lucide="cloud-lightning"></i>
+        <span>Weather Feeds</span>
+      </button>
+    </nav>
+
+    <!-- Content Workspace -->
+    <div class="content-container">
+      
+      <!-- Left Column: Map Engine -->
+      <section class="map-section card">
+        <div class="card-header map-header">
+          <div class="header-left">
+            <h3><i data-lucide="navigation"></i> Dynamic Hazard Map</h3>
+            <span id="map-mode-badge" class="badge map-badge-online">Live Tiles</span>
+          </div>
+          <div class="header-actions">
+            <button id="btn-recenter" class="btn-icon" title="Recenter Map"><i data-lucide="locate"></i></button>
+            <button id="btn-draw-fallback" class="btn btn-secondary btn-small" style="display:none;">Use Grid Offline</button>
+          </div>
+        </div>
+        
+        <div class="map-view-wrapper">
+          <!-- Leaflet Map Container -->
+          <div id="map"></div>
+          
+          <!-- Offline Vector Fallback Canvas -->
+          <div id="offline-map-fallback" class="hidden">
+            <canvas id="fallback-canvas"></canvas>
+            <div class="fallback-overlay">
+              <i data-lucide="map-pin" class="bouncing-marker"></i>
+              <h4>Simulated Offline Map Grid</h4>
+              <p>Zooming and coordinate tracking active. Leaflet tiles offline.</p>
+              <button id="btn-retry-tiles" class="btn btn-secondary btn-small">Retry Live Tiles</button>
+            </div>
+          </div>
+          
+          <!-- Coordinates Overlay -->
+          <div class="map-coords-overlay">
+            <span>Lat: <strong id="val-lat">20.5937</strong></span>
+            <span>Lng: <strong id="val-lng">78.9629</strong></span>
+            <span class="gps-accuracy"><span class="accuracy-dot"></span> GPS Ready</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Interactive Panels -->
+      <section class="panel-section">
+        
+        <!-- Panel 1: Map Dashboard Summary (default overlay, is coupled with panel-map tab) -->
+        <div id="panel-map" class="tab-panel active">
+          <div class="card panel-card">
+            <div class="card-header">
+              <h2>Crisis Overview</h2>
+              <span class="time-stamp" id="live-clock">10:45 AM</span>
+            </div>
+            
+            <div class="card-body">
+              <div class="grid-stats">
+                <div class="stat-card urgent">
+                  <div class="stat-icon"><i data-lucide="shield-alert"></i></div>
+                  <div class="stat-data">
+                    <span class="stat-val" id="count-sos">0</span>
+                    <span class="stat-label">Active SOS Signals</span>
+                  </div>
+                </div>
+                <div class="stat-card warning">
+                  <div class="stat-icon"><i data-lucide="flame"></i></div>
+                  <div class="stat-data">
+                    <span class="stat-val" id="count-hazards">0</span>
+                    <span class="stat-label">Hazards Dropped</span>
+                  </div>
+                </div>
+                <div class="stat-card success">
+                  <div class="stat-icon"><i data-lucide="check-circle-2"></i></div>
+                  <div class="stat-data">
+                    <span class="stat-val" id="count-safe">0</span>
+                    <span class="stat-label">Reported Safe</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="interactive-zone mt-4">
+                <h4>Quick Instructions</h4>
+                <p>Use the map to click and designate coordinates, drop hazard pins, check local shelters, or register disaster events. Below are the registered shelters near you.</p>
+                
+                <div class="shelter-list-container scrollable-list mt-3">
+                  <h5>Nearby Shelters & Capacities</h5>
+                  <div class="list-items" id="shelter-list">
+                    <!-- Dynamic shelter items -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 2: SOS & Siren -->
+        <div id="panel-sos" class="tab-panel">
+          <div class="card panel-card">
+            <div class="card-header header-sos">
+              <h2>Emergency Beacon Command</h2>
+              <span class="alert-pulse-red">SOS</span>
+            </div>
+            
+            <div class="card-body">
+              <!-- Audio Siren Sub-Panel -->
+              <div class="beacon-audio-control card-nested">
+                <h3><i data-lucide="volume-2"></i> Emergency Morse-SOS Siren</h3>
+                <p class="text-muted text-small">Emits a high-frequency 880Hz audio sound in standard Morse code (...---...) to alert nearby rescue teams under rubble or low visibility.</p>
+                
+                <div class="control-actions mt-3">
+                  <button id="btn-siren-toggle" class="btn btn-danger btn-large w-full">
+                    <span class="siren-pulse-icon"><i data-lucide="radio"></i></span> Activate Morse Siren
+                  </button>
+                </div>
+                
+                <div id="siren-flash-screen" class="hidden-flash">
+                  <div class="flash-text">SOS BEACON ACTIVE</div>
+                </div>
+              </div>
+
+              <!-- SOS GPS Drop Signal -->
+              <div class="beacon-gps-control mt-4">
+                <h3><i data-lucide="map-pin"></i> Broadcast Local Hazard Pin</h3>
+                <p class="text-small">Broadcast your current coordinates to the shared P2P mesh network database.</p>
+                
+                <form id="form-hazard-pin" class="mt-3">
+                  <div class="form-group">
+                    <label for="hazard-type">Hazard Classification</label>
+                    <select id="hazard-type" required class="form-input">
+                      <option value="Flooding">🌊 Flooding / Deep Water</option>
+                      <option value="Road Block">🚧 Road Blocked / Debris</option>
+                      <option value="Fallen Tree">🌲 Fallen Tree / Pole</option>
+                      <option value="Live Wire">⚡ Downed Live Wire</option>
+                      <option value="Medical Emergency">🩺 Medical Emergency Need</option>
+                    </select>
+                  </div>
+                  
+                  <div class="form-row">
+                    <div class="form-group col">
+                      <label>Latitude</label>
+                      <input type="number" step="any" id="hazard-lat" class="form-input" readonly>
+                    </div>
+                    <div class="form-group col">
+                      <label>Longitude</label>
+                      <input type="number" step="any" id="hazard-lng" class="form-input" readonly>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="hazard-description">Remarks / Details</label>
+                    <textarea id="hazard-description" placeholder="Specify depth, block severity, number of trapped, etc." class="form-input" rows="3"></textarea>
+                  </div>
+
+                  <button type="submit" class="btn btn-primary w-full mt-2"><i data-lucide="broadcast"></i> Drop Marker & Broadcast</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 3: START Triage Diagnostic Wizard -->
+        <div id="panel-triage" class="tab-panel">
+          <div class="card panel-card">
+            <div class="card-header">
+              <h2>S.T.A.R.T. Triage Diagnostic Wizard</h2>
+              <span class="badge info-badge">Trauma Guide</span>
+            </div>
+            
+            <div class="card-body">
+              <p class="text-muted text-small mb-3">Simple Triage and Rapid Treatment protocol is used by emergency responders to quickly classify victims in mass-casualty incidents.</p>
+              
+              <!-- Triage Wizard Flow -->
+              <div id="triage-wizard-container" class="card-nested">
+                
+                <!-- Step 0: Patient Details -->
+                <div class="triage-step active" id="triage-step-0">
+                  <h4>Step 1: Record Victim Details</h4>
+                  <div class="form-group mt-3">
+                    <label for="triage-name">Victim Name / Description</label>
+                    <input type="text" id="triage-name" placeholder="E.g., Male, late 30s, blue shirt or Name if known" class="form-input">
+                  </div>
+                  <div class="form-group">
+                    <label for="triage-location">Approx Location / Notes</label>
+                    <input type="text" id="triage-location" placeholder="E.g., Near main lobby, floor 1" class="form-input">
+                  </div>
+                  <button id="triage-start-btn" class="btn btn-primary w-full mt-3">Begin Diagnostic Questionnaire</button>
+                </div>
+
+                <!-- Step 1: Ability to Walk -->
+                <div class="triage-step" id="triage-step-1" style="display:none;">
+                  <h4>Is the patient able to walk?</h4>
+                  <div class="triage-graphic"><i data-lucide="footprints" class="step-icon"></i></div>
+                  <div class="wizard-actions mt-4">
+                    <button class="btn btn-success btn-wizard" onclick="setTriageAnswer('walk', true)">Yes (Able to Walk)</button>
+                    <button class="btn btn-danger btn-wizard" onclick="setTriageAnswer('walk', false)">No (Cannot Walk)</button>
+                  </div>
+                </div>
+
+                <!-- Step 2: Respiration check -->
+                <div class="triage-step" id="triage-step-2" style="display:none;">
+                  <h4>Is the patient breathing?</h4>
+                  <div class="triage-graphic"><i data-lucide="wind" class="step-icon"></i></div>
+                  <div class="wizard-actions mt-4">
+                    <button class="btn btn-primary btn-wizard" onclick="setTriageAnswer('breathing', 'yes')">Yes</button>
+                    <button class="btn btn-secondary btn-wizard" onclick="setTriageAnswer('breathing', 'no')">No</button>
+                  </div>
+                </div>
+
+                <!-- Step 2b: Airway positioning check -->
+                <div class="triage-step" id="triage-step-2b" style="display:none;">
+                  <h4>Reposition airway. Does breathing begin?</h4>
+                  <div class="triage-graphic"><i data-lucide="shield-alert" class="step-icon"></i></div>
+                  <div class="wizard-actions mt-4">
+                    <button class="btn btn-danger btn-wizard" onclick="setTriageAnswer('airway_breathing', true)">Yes</button>
+                    <button class="btn btn-dark btn-wizard" onclick="setTriageAnswer('airway_breathing', false)">No</button>
+                  </div>
+                </div>
+
+                <!-- Step 3: Respiration Rate -->
+                <div class="triage-step" id="triage-step-3" style="display:none;">
+                  <h4>What is the respiratory rate?</h4>
+                  <div class="triage-graphic"><i data-lucide="gauge" class="step-icon"></i></div>
+                  <div class="wizard-actions flex-col mt-4">
+                    <button class="btn btn-danger btn-wizard w-full mb-2" onclick="setTriageAnswer('rate', 'over_30')">Over 30 breaths / min</button>
+                    <button class="btn btn-primary btn-wizard w-full" onclick="setTriageAnswer('rate', 'under_30')">Under 30 breaths / min</button>
+                  </div>
+                </div>
+
+                <!-- Step 4: Perfusion / Pulse check -->
+                <div class="triage-step" id="triage-step-4" style="display:none;">
+                  <h4>Perfusion: Check radial pulse or Capillary refill.</h4>
+                  <p class="text-small text-muted text-center mt-2">Is capillary refill > 2 seconds or is the radial pulse absent?</p>
+                  <div class="triage-graphic"><i data-lucide="heart" class="step-icon pulsate-fast"></i></div>
+                  <div class="wizard-actions mt-4">
+                    <button class="btn btn-danger btn-wizard" onclick="setTriageAnswer('perfusion', 'failed')">Absent Pulse / > 2s Refill</button>
+                    <button class="btn btn-primary btn-wizard" onclick="setTriageAnswer('perfusion', 'passed')">Normal Pulse / < 2s Refill</button>
+                  </div>
+                </div>
+
+                <!-- Step 5: Mental Status check -->
+                <div class="triage-step" id="triage-step-5" style="display:none;">
+                  <h4>Mental Status: Can patient follow simple commands?</h4>
+                  <p class="text-small text-muted text-center mt-2">E.g., "Squeeze my hand" or "Close your eyes".</p>
+                  <div class="triage-graphic"><i data-lucide="brain-circuit" class="step-icon"></i></div>
+                  <div class="wizard-actions mt-4">
+                    <button class="btn btn-danger btn-wizard" onclick="setTriageAnswer('mental', 'failed')">Cannot Follow Commands</button>
+                    <button class="btn btn-success btn-wizard" onclick="setTriageAnswer('mental', 'passed')">Can Follow Commands</button>
+                  </div>
+                </div>
+
+                <!-- Step 6: Results -->
+                <div class="triage-step" id="triage-step-result" style="display:none;">
+                  <h4>Diagnostic Classification</h4>
+                  
+                  <div class="triage-result-card" id="triage-result-display">
+                    <h1 id="triage-class-title">IMMEDIATE</h1>
+                    <div id="triage-class-color-bar" class="color-bar red"></div>
+                    <p id="triage-class-description" class="mt-2 text-small">Severe life threats. Immediate surgery or stabilization needed.</p>
+                  </div>
+
+                  <div class="wizard-actions mt-4">
+                    <button id="triage-save-btn" class="btn btn-primary w-full">Save & File Registry Tag</button>
+                    <button id="triage-reset-btn" class="btn btn-secondary w-full mt-2">Reset Diagnostic</button>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Saved Triage Cases -->
+              <div class="triage-log-section mt-4">
+                <h5>Active Field Triage Log</h5>
+                <div id="triage-log-list" class="scrollable-list mt-2">
+                  <!-- Dynamic triage cards -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 4: Supply & Volunteer Ledger -->
+        <div id="panel-ledger" class="tab-panel">
+          <div class="card panel-card">
+            <div class="card-header">
+              <h2>Resource & Volunteer Ledger</h2>
+              <span class="badge info-badge">P2P Sharing</span>
+            </div>
+            
+            <div class="card-body">
+              <!-- Tab toggles within Ledger -->
+              <div class="inner-tabs mb-3">
+                <button class="inner-tab active" data-ledger-tab="ledger-supplies">Supplies Request/Offer</button>
+                <button class="inner-tab" data-ledger-tab="ledger-volunteers">Volunteers & Tasks</button>
+                <button class="inner-tab" data-ledger-tab="ledger-matchmaker">Auto-Matchmaker</button>
+              </div>
+
+              <!-- Supplies Ledger -->
+              <div id="ledger-supplies" class="ledger-tab-panel active">
+                <form id="form-supply">
+                  <div class="form-row">
+                    <div class="form-group col">
+                      <label for="supply-type">Type</label>
+                      <select id="supply-type" class="form-input">
+                        <option value="request">🚨 Requesting Help</option>
+                        <option value="offer">📦 Offering Resource</option>
+                      </select>
+                    </div>
+                    <div class="form-group col">
+                      <label for="supply-item">Resource Category</label>
+                      <select id="supply-item" class="form-input">
+                        <option value="Drinking Water">💧 Drinking Water</option>
+                        <option value="Dry Rations">🍎 Dry Rations / Food</option>
+                        <option value="First Aid Kits">💊 First Aid / Medical Kits</option>
+                        <option value="Blankets/Tents">🏕️ Blankets & Tents</option>
+                        <option value="Flashlights/Batteries">🔦 Flashlights / Batteries</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-row">
+                    <div class="form-group col">
+                      <label for="supply-qty">Quantity</label>
+                      <input type="text" id="supply-qty" placeholder="E.g., 50 boxes, 20 bottles" class="form-input" required>
+                    </div>
+                    <div class="form-group col">
+                      <label for="supply-contact">Contact Name/No.</label>
+                      <input type="text" id="supply-contact" placeholder="E.g., John / 9876543210" class="form-input" required>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="supply-details">Details / Shelter Location</label>
+                    <input type="text" id="supply-details" placeholder="E.g., Deliver to Greenfield Shelter A" class="form-input" required>
+                  </div>
+
+                  <button type="submit" class="btn btn-primary w-full mt-2"><i data-lucide="plus-circle"></i> Log Resource Entry</button>
+                </form>
+
+                <div class="scrollable-list mt-4">
+                  <h5>Active Resource Ledger</h5>
+                  <div id="supply-list-items" class="list-items">
+                    <!-- Dynamic supply cards -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Volunteers & Tasks Ledger -->
+              <div id="ledger-volunteers" class="ledger-tab-panel" style="display:none;">
+                <form id="form-volunteer">
+                  <div class="form-row">
+                    <div class="form-group col">
+                      <label for="vol-name">Volunteer Name</label>
+                      <input type="text" id="vol-name" placeholder="E.g., Rajesh Kumar" class="form-input" required>
+                    </div>
+                    <div class="form-group col">
+                      <label for="vol-phone">Phone / Radio ID</label>
+                      <input type="text" id="vol-phone" placeholder="E.g., 9998887776" class="form-input" required>
+                    </div>
+                  </div>
+
+                  <div class="form-row">
+                    <div class="form-group col">
+                      <label for="vol-skill">Primary Skillset</label>
+                      <select id="vol-skill" class="form-input">
+                        <option value="First Aid / Medical">🩺 Medical / First Aid</option>
+                        <option value="Rescue / Swimming">🏊 Rescue / Swimming</option>
+                        <option value="Clearing / Debris Removal">🪓 Debris Clearing</option>
+                        <option value="Food & Logistics Distribution">🚚 Logistics / Distribution</option>
+                      </select>
+                    </div>
+                    <div class="form-group col">
+                      <label for="vol-status">Availability</label>
+                      <select id="vol-status" class="form-input">
+                        <option value="active">🟢 Immediate Duty Ready</option>
+                        <option value="resting">🟡 Resting / Standby</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <button type="submit" class="btn btn-primary w-full mt-2"><i data-lucide="user-plus"></i> Register Volunteer</button>
+                </form>
+
+                <div class="scrollable-list mt-4">
+                  <h5>Registered Field Volunteers</h5>
+                  <div id="vol-list-items" class="list-items">
+                    <!-- Dynamic volunteers -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Resource Matchmaker -->
+              <div id="ledger-matchmaker" class="ledger-tab-panel" style="display:none;">
+                <div class="info-alert info-theme">
+                  <i data-lucide="cpu"></i>
+                  <div>
+                    <strong>P2P Matching Engine Active</strong>
+                    <p class="text-small">Auto-crosschecks requests and offers locally to facilitate offline trades and logistics routing.</p>
+                  </div>
+                </div>
+
+                <div id="matchmaker-results" class="mt-3">
+                  <!-- Match results -->
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 5: Safety & Missing Persons Registry -->
+        <div id="panel-registry" class="tab-panel">
+          <div class="card panel-card">
+            <div class="card-header">
+              <h2>Citizen Safety Registry</h2>
+              <span class="badge info-badge">Searchable Local DB</span>
+            </div>
+            
+            <div class="card-body">
+              <div class="registry-actions">
+                <input type="text" id="registry-search" placeholder="🔍 Search name, status, or phone..." class="form-input w-full">
+              </div>
+
+              <!-- Quick Registration Form -->
+              <div class="quick-reg-box card-nested mt-3">
+                <h4><i data-lucide="user-check"></i> Register Citizen Status</h4>
+                <form id="form-registry">
+                  <div class="form-row">
+                    <div class="form-group col">
+                      <label for="reg-name">Full Name</label>
+                      <input type="text" id="reg-name" placeholder="E.g., Amit Sharma" class="form-input" required>
+                    </div>
+                    <div class="form-group col">
+                      <label for="reg-phone">Phone Number</label>
+                      <input type="text" id="reg-phone" placeholder="E.g., 9876543210" class="form-input">
+                    </div>
+                  </div>
+
+                  <div class="form-row">
+                    <div class="form-group col">
+                      <label for="reg-status">Status</label>
+                      <select id="reg-status" class="form-input">
+                        <option value="Safe">🟢 Safe & Sheltered</option>
+                        <option value="Injured">🟡 Injured (Needs Care)</option>
+                        <option value="Missing">🔴 Missing Person Alert</option>
+                        <option value="Evacuated">🔵 Evacuated Out of Zone</option>
+                      </select>
+                    </div>
+                    <div class="form-group col">
+                      <label for="reg-photo">Photo Profile (Simulated)</label>
+                      <select id="reg-photo" class="form-input">
+                        <option value="none">No Photo</option>
+                        <option value="avatar1">👨 Male Avatar (Amit)</option>
+                        <option value="avatar2">👩 Female Avatar (Ritu)</option>
+                        <option value="avatar3">👦 Child Avatar (Rahul)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="reg-details">Current Shelter / Last Known Location</label>
+                    <input type="text" id="reg-details" placeholder="E.g., Safe in Government High School Shelter" class="form-input" required>
+                  </div>
+
+                  <button type="submit" class="btn btn-primary w-full mt-2"><i data-lucide="save"></i> Save Registry Record</button>
+                </form>
+              </div>
+
+              <div class="scrollable-list mt-4">
+                <h5>Safety Ledger Directory</h5>
+                <div id="registry-list-items" class="list-items">
+                  <!-- Dynamic registry listings -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 6: Survival Guides -->
+        <div id="panel-guides" class="tab-panel">
+          <div class="card panel-card">
+            <div class="card-header">
+              <h2>Offline Survival Guidelines</h2>
+              <span class="badge info-badge">100% Offline PDF-style</span>
+            </div>
+            
+            <div class="card-body">
+              <p class="text-muted text-small mb-3">Critical procedures to keep you alive when communication networks are disabled.</p>
+              
+              <div class="guide-carousel-controls">
+                <button class="btn btn-secondary btn-small btn-guide-nav active" data-guide="guide-firstaid">🩺 First Aid</button>
+                <button class="btn btn-secondary btn-small btn-guide-nav" data-guide="guide-flood">🌊 Flood Safety</button>
+                <button class="btn btn-secondary btn-small btn-guide-nav" data-guide="guide-earthquake">🏢 Earthquake</button>
+                <button class="btn btn-secondary btn-small btn-guide-nav" data-guide="guide-cyclone">🌀 Cyclone</button>
+              </div>
+
+              <div class="guide-viewer mt-3 card-nested scrollable-list">
+                <!-- Guide: First Aid -->
+                <div id="guide-firstaid" class="guide-content active">
+                  <h3>🩺 Emergency First Aid Measures</h3>
+                  <hr class="guide-divider">
+                  <div class="guide-step-item">
+                    <strong>1. Heavy Bleeding Control:</strong>
+                    <p>Apply firm, direct pressure with a clean cloth. Elevate the wound above the heart. Do not remove dressing if soaked; pile more cloth on top.</p>
+                  </div>
+                  <div class="guide-step-item">
+                    <strong>2. Respiration Failure (CPR):</strong>
+                    <p>30 chest compressions (2 inches deep, rate 100-120/min) followed by 2 rescue breaths. Repeat until medical response arrives.</p>
+                  </div>
+                  <div class="guide-step-item">
+                    <strong>3. Heat Stroke Relief:</strong>
+                    <p>Move victim to shade. Cool them with water mist, wet clothes, and fan them. Give sips of cool water if fully conscious.</p>
+                  </div>
+                </div>
+
+                <!-- Guide: Flood -->
+                <div id="guide-flood" class="guide-content" style="display:none;">
+                  <h3>🌊 Flood Survival Guidance</h3>
+                  <hr class="guide-divider">
+                  <div class="guide-step-item">
+                    <strong>1. Move to Higher Ground:</strong>
+                    <p>Evacuate immediately. Never stay in basements or lower floors. Do not cross rushing water paths.</p>
+                  </div>
+                  <div class="guide-step-item">
+                    <strong>2. Electrical Isolation:</strong>
+                    <p>Turn off main grid switches inside your dwelling if water enters. Never touch live electrical items when wet.</p>
+                  </div>
+                  <div class="guide-step-item">
+                    <strong>3. Water Safety:</strong>
+                    <p>Do not drink tap water. Drink boiled or purified water only. Treat any skin contact with sanitizer if possible.</p>
+                  </div>
+                </div>
+
+                <!-- Guide: Earthquake -->
+                <div id="guide-earthquake" class="guide-content" style="display:none;">
+                  <h3>🏢 Earthquake - Drop, Cover, Hold On</h3>
+                  <hr class="guide-divider">
+                  <div class="guide-step-item">
+                    <strong>1. Inside a Building:</strong>
+                    <p><strong>DROP</strong> to your hands and knees. <strong>COVER</strong> your head/neck under a sturdy table or desk. <strong>HOLD ON</strong> until shaking stops.</p>
+                  </div>
+                  <div class="guide-step-item">
+                    <strong>2. Outdoors:</strong>
+                    <p>Move to clear open fields away from power lines, glass facades, buildings, and flyovers. Drop low to avoid falling.</p>
+                  </div>
+                  <div class="guide-step-item">
+                    <strong>3. Trapped Under Rubble:</strong>
+                    <p>Do not light matches or kick up dust. Tap on pipes/walls (or activate our Morse-SOS beacon app). Shout only as a last resort to preserve energy.</p>
+                  </div>
+                </div>
+
+                <!-- Guide: Cyclone -->
+                <div id="guide-cyclone" class="guide-content" style="display:none;">
+                  <h3>🌀 Cyclone Protection Steps</h3>
+                  <hr class="guide-divider">
+                  <div class="guide-step-item">
+                    <strong>1. Secure Windows & Openings:</strong>
+                    <p>Tape windows, board them up, and seal door cracks. Stay in the inner-most room away from outside glass panels.</p>
+                  </div>
+                  <div class="guide-step-item">
+                    <strong>2. Keep Emergency Kit Nearby:</strong>
+                    <p>Keep batteries, dry rations, first aid, radios, and power banks wrapped in waterproof bags.</p>
+                  </div>
+                  <div class="guide-step-item">
+                    <strong>3. Avoid Eye of Cyclone Delusion:</strong>
+                    <p>If winds suddenly calm, the cyclone center is passing. Stay inside. Heavy destructive winds will resume in the opposite direction quickly.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 7: Weather Alerts -->
+        <div id="panel-weather" class="tab-panel">
+          <div class="card panel-card">
+            <div class="card-header">
+              <h2>National Crisis Advisory Feeds</h2>
+              <span class="badge warning-badge">IMD & NDMA Broadcast</span>
+            </div>
+            
+            <div class="card-body">
+              <p class="text-small text-muted mb-3">Simulated real-time crisis broadcast signals fetched from offline satellite transponders.</p>
+              
+              <div class="weather-alert-feed">
+                <!-- Red Alert -->
+                <div class="alert-banner-feed red-feed">
+                  <div class="feed-badge"><i data-lucide="cloud-lightning"></i> RED ALERT</div>
+                  <div class="feed-body">
+                    <strong>IMD Cyclone Warning: Odisha Coastal districts</strong>
+                    <p class="text-small">Extremely severe cyclonic storm approaching Ganjam/Puri coasts. Wind speeds up to 160km/h. Complete evacuation ordered.</p>
+                    <span class="feed-time">10 mins ago</span>
+                  </div>
+                </div>
+
+                <!-- Orange Alert -->
+                <div class="alert-banner-feed orange-feed mt-3">
+                  <div class="feed-badge"><i data-lucide="waves"></i> ORANGE ALERT</div>
+                  <div class="feed-body">
+                    <strong>NDMA Flood Alert: Yamuna River basin Delhi-NCR</strong>
+                    <p class="text-small">Hathnikund barrage discharges excess water. Water level to cross danger mark 205.33m. Floodplain evacuation initiated.</p>
+                    <span class="feed-time">1 hour ago</span>
+                  </div>
+                </div>
+
+                <!-- Yellow Alert -->
+                <div class="alert-banner-feed yellow-feed mt-3">
+                  <div class="feed-badge"><i data-lucide="wind"></i> YELLOW ALERT</div>
+                  <div class="feed-body">
+                    <strong>IMD Weather Alert: Landslide Risk Western Ghats</strong>
+                    <p class="text-small">Heavy rainfall expected over Wayanad, Idukki regions. Commuters advised to avoid nighttime hill travel.</p>
+                    <span class="feed-time">4 hours ago</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Collapsible Bilingual AI Chatbot -->
+  <div class="chatbot-wrapper collapsed" id="chatbot-container">
+    <div class="chatbot-header" id="chatbot-header-toggle">
+      <div class="chatbot-header-title">
+        <span class="chatbot-pulse"></span>
+        <h4><i data-lucide="message-square"></i> LifeBridge AI Response Bot</h4>
+      </div>
+      <button class="btn-icon header-toggle-icon"><i data-lucide="chevron-up" id="chatbot-chevron"></i></button>
+    </div>
+    
+    <div class="chatbot-body">
+      <!-- Lang Toggle -->
+      <div class="chat-lang-switch mb-2">
+        <button id="btn-lang-en" class="btn btn-secondary btn-small active">English</button>
+        <button id="btn-lang-hi" class="btn btn-secondary btn-small">हिन्दी (Hindi)</button>
+      </div>
+      
+      <!-- Suggestion chips -->
+      <div class="suggestion-chips scroll-x" id="chat-suggestion-chips">
+        <!-- English Chips -->
+        <span class="chip-item" data-query="Where is the nearest shelter?">Nearest Shelter</span>
+        <span class="chip-item" data-query="How to perform CPR?">How to CPR</span>
+        <span class="chip-item" data-query="What to do in a flood?">Flood Safety</span>
+        <!-- Hindi Chips (hidden initially) -->
+        <span class="chip-item hindi-chip hidden" data-query="नजदीकी शेल्टर कहाँ है?">नजदीकी शेल्टर</span>
+        <span class="chip-item hindi-chip hidden" data-query="बाढ़ में क्या करें?">बाढ़ में बचाव</span>
+        <span class="chip-item hindi-chip hidden" data-query="सीपीआर कैसे दें?">सीपीआर गाइड</span>
+      </div>
+
+      <!-- Messages container -->
+      <div class="chat-messages-container" id="chat-messages">
+        <div class="chat-msg bot">
+          <p>Hello! I am your LifeBridge Disaster Assistant. I can operate fully offline to answer first aid, shelter, or crisis guidelines. How can I help you today?</p>
+        </div>
+      </div>
+
+      <!-- Input box -->
+      <form id="chat-form" class="chat-input-row">
+        <input type="text" id="chat-input" placeholder="Type emergency query here..." class="form-input">
+        <button type="submit" class="btn btn-primary btn-icon-send"><i data-lucide="send"></i></button>
+      </form>
+    </div>
+  </div>
+
+  <!-- QR Code P2P Sync Overlay Modal -->
+  <div id="sync-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i data-lucide="qr-code"></i> P2P Mesh Sync Hub</h3>
+        <button id="btn-close-modal" class="btn-icon"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body text-center">
+        <p class="text-small mb-3">Disaster regions often lose server connectivity. Scan this QR code from another responder's device to merge hazard records, triage sheets, and supply listings instantly.</p>
+        
+        <div class="qr-tabs mb-3">
+          <button class="qr-tab active" id="tab-qr-generate">Share My Data QR</button>
+          <button class="qr-tab" id="tab-qr-scan">Scan Responder Data</button>
+        </div>
+
+        <!-- Generate Tab -->
+        <div id="qr-generate-section">
+          <div id="qrcode-container" class="qr-display-box">
+            <!-- QR code goes here -->
+          </div>
+          <button id="btn-refresh-qr" class="btn btn-primary mt-3"><i data-lucide="refresh-cw"></i> Refresh Code</button>
+        </div>
+
+        <!-- Scan Tab -->
+        <div id="qr-scan-section" class="hidden">
+          <div class="qr-scanner-box">
+            <i data-lucide="scan-line" class="scanning-laser"></i>
+            <p class="text-small text-muted mt-2">Simulate scanning by choosing a synced JSON mesh file or clicking below to auto-import a mock responder package.</p>
+          </div>
+          <div class="scan-actions mt-3">
+            <input type="file" id="qr-file-input" style="display:none;" accept=".json">
+            <button id="btn-upload-qr" class="btn btn-secondary w-full mb-2"><i data-lucide="upload"></i> Upload Synced QR Package (.json)</button>
+            <button id="btn-simulate-scan" class="btn btn-primary w-full"><i data-lucide="shuffle"></i> Auto-Merge Simulated QR Data</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- QRCode.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nOMdBmdd8ODc9yEQ38QXSO824A35BEXyQlss5k9I9q6A8B5qJv8CoXGScJ3XGOJcRyYLQ29Oc5Jg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- Application JS -->
+  <script src="app.js"></script>
+
+</body>
+</html>
