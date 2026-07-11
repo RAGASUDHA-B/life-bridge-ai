@@ -1,4 +1,4 @@
-/* LifeBridge AI Design System - Glassmorphism Theme */
+
 
 :root {
   --bg-deep: #080c15;
@@ -10,14 +10,13 @@
   --text-main: #f3f4f6;
   --text-muted: #9ca3af;
   --text-dark: #1f2937;
-  
-  /* Harmonious Alert Colors (HSL) */
-  --accent-emergency: hsl(355, 100%, 61%); /* emergency red */
-  --accent-warning: hsl(36, 100%, 52%); /* safety orange */
-  --accent-yellow: hsl(51, 100%, 51%); /* yellow triage */
-  --accent-clinical: hsl(142, 70%, 50%); /* triage green / safe */
-  --accent-cyan: hsl(200, 100%, 50%); /* medical info */
-  --accent-primary: hsl(218, 92%, 58%); /* blue branding */
+
+  --accent-emergency: hsl(355, 100%, 61%);
+  --accent-warning: hsl(36, 100%, 52%);
+  --accent-yellow: hsl(51, 100%, 51%);
+  --accent-clinical: hsl(142, 70%, 50%); 
+  --accent-cyan: hsl(200, 100%, 50%);
+  --accent-primary: hsl(218, 92%, 58%); 
   --accent-primary-hover: hsl(218, 92%, 65%);
   
   --shadow-neon-red: 0 0 15px rgba(255, 69, 58, 0.35);
@@ -28,8 +27,6 @@
   
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
-/* Base Styles */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -46,8 +43,6 @@ body {
   overflow-x: hidden;
   background-image: radial-gradient(circle at 10% 20%, rgba(13, 23, 42, 0.6) 0%, rgba(8, 12, 21, 1) 90%);
 }
-
-/* Scrollbar Customization */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -62,8 +57,6 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
-
-/* Header */
 .app-header {
   height: 70px;
   background: rgba(8, 12, 21, 0.8);
@@ -140,8 +133,6 @@ body {
   align-items: center;
   gap: 16px;
 }
-
-/* Status Indicator */
 .status-indicator {
   display: flex;
   align-items: center;
@@ -172,14 +163,12 @@ body {
   color: var(--accent-emergency);
 }
 
-/* Main Layout */
 .app-layout {
   display: flex;
   flex: 1;
   height: calc(100vh - 70px);
 }
 
-/* Sidebar Nav */
 .sidebar-nav {
   width: 90px;
   background: rgba(8, 12, 21, 0.5);
@@ -229,8 +218,6 @@ body {
   width: 20px;
   height: 20px;
 }
-
-/* Content Container */
 .content-container {
   display: grid;
   grid-template-columns: 58% 42%;
@@ -239,8 +226,6 @@ body {
   gap: 20px;
   overflow: hidden;
 }
-
-/* Cards & Glassmorphism */
 .card {
   background: var(--bg-card);
   backdrop-filter: blur(16px);
@@ -287,8 +272,6 @@ body {
   flex: 1;
   overflow-y: auto;
 }
-
-/* Map Section styling */
 .map-section {
   height: 100%;
 }
@@ -308,8 +291,6 @@ body {
   height: 100%;
   z-index: 1;
 }
-
-/* Map Fallback Screen */
 #offline-map-fallback {
   position: absolute;
   top: 0;
@@ -356,12 +337,10 @@ body {
   width: 32px;
   height: 32px;
 }
-
 @keyframes bounce-marker {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-12px); }
 }
-
 .map-coords-overlay {
   position: absolute;
   bottom: 16px;
@@ -376,14 +355,12 @@ body {
   gap: 16px;
   font-size: 0.75rem;
 }
-
 .gps-accuracy {
   color: var(--accent-clinical);
   display: flex;
   align-items: center;
   gap: 6px;
 }
-
 .accuracy-dot {
   width: 6px;
   height: 6px;
@@ -396,8 +373,6 @@ body {
   0% { opacity: 0.3; }
   100% { opacity: 1; }
 }
-
-/* Action panels */
 .panel-section {
   height: 100%;
   display: flex;
@@ -417,8 +392,6 @@ body {
 .panel-card {
   height: 100%;
 }
-
-/* Stats Display */
 .grid-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -466,8 +439,6 @@ body {
   color: var(--text-muted);
   font-weight: 500;
 }
-
-/* Accent Stat styles */
 .stat-card.urgent .stat-icon { background: rgba(255, 69, 58, 0.12); color: var(--accent-emergency); }
 .stat-card.urgent { border-color: rgba(255, 69, 58, 0.15); }
 .stat-card.urgent:hover { box-shadow: var(--shadow-neon-red); }
@@ -479,8 +450,6 @@ body {
 .stat-card.success .stat-icon { background: rgba(48, 209, 88, 0.12); color: var(--accent-clinical); }
 .stat-card.success { border-color: rgba(48, 209, 88, 0.15); }
 .stat-card.success:hover { box-shadow: var(--shadow-neon-green); }
-
-/* Form Controls */
 .form-group {
   margin-bottom: 14px;
 }
@@ -521,8 +490,6 @@ body {
 .form-row .col {
   flex: 1;
 }
-
-/* Button UI */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -622,8 +589,6 @@ body {
 .mt-4 { margin-top: 20px; }
 .mb-2 { margin-bottom: 8px; }
 .mb-3 { margin-bottom: 12px; }
-
-/* Lists UI */
 .scrollable-list {
   max-height: 250px;
   overflow-y: auto;
@@ -673,8 +638,6 @@ body {
   margin-top: 4px;
   font-size: 0.75rem;
 }
-
-/* Audio Siren pulse animation */
 .siren-pulse-icon {
   display: inline-block;
   animation: siren-wobble 0.8s infinite ease-in-out;
@@ -705,8 +668,6 @@ body {
   0% { box-shadow: inset 0 0 40px rgba(255, 69, 58, 0.7); }
   100% { box-shadow: inset 0 0 40px rgba(255, 255, 255, 0.7); }
 }
-
-/* S.T.A.R.T. Wizard */
 .triage-step {
   display: flex;
   flex-direction: column;
@@ -761,8 +722,6 @@ body {
 .flex-col {
   flex-direction: column;
 }
-
-/* Triage Results Card */
 .triage-result-card {
   width: 100%;
   background: rgba(0, 0, 0, 0.4);
@@ -790,8 +749,6 @@ body {
 .color-bar.yellow { background: var(--accent-yellow); box-shadow: 0 0 10px rgba(255, 214, 10, 0.5); }
 .color-bar.green { background: var(--accent-clinical); box-shadow: var(--shadow-neon-green); }
 .color-bar.black { background: #333; border: 1px solid #555; }
-
-/* Triage Tag badges in lists */
 .tag-badge {
   display: inline-block;
   padding: 3px 6px;
@@ -805,8 +762,6 @@ body {
 .tag-badge.YELLOW { background: rgba(255, 214, 10, 0.15); color: var(--accent-yellow); border: 1px solid rgba(255, 214, 10, 0.3); }
 .tag-badge.GREEN { background: rgba(48, 209, 88, 0.15); color: var(--accent-clinical); border: 1px solid rgba(48, 209, 88, 0.3); }
 .tag-badge.BLACK { background: rgba(255, 255, 255, 0.05); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); }
-
-/* Inner tabs (Ledger) */
 .inner-tabs {
   display: flex;
   gap: 4px;
@@ -842,8 +797,6 @@ body {
 .ledger-tab-panel.active {
   display: block;
 }
-
-/* Info Alert */
 .info-alert {
   display: flex;
   gap: 12px;
@@ -866,8 +819,6 @@ body {
   width: 18px;
   height: 18px;
 }
-
-/* Match results */
 .match-card {
   border: 1px dashed rgba(48, 209, 88, 0.3);
   background: rgba(48, 209, 88, 0.04);
@@ -903,8 +854,6 @@ body {
 .match-arrow {
   color: var(--accent-clinical);
 }
-
-/* Registry Profile Card with photo */
 .citizen-profile-row {
   display: flex;
   gap: 12px;
@@ -926,8 +875,6 @@ body {
 .citizen-details {
   flex: 1;
 }
-
-/* Survival Guides */
 .guide-carousel-controls {
   display: flex;
   gap: 6px;
@@ -978,8 +925,6 @@ body {
   color: var(--text-muted);
   line-height: 1.4;
 }
-
-/* Weather feed warnings */
 .alert-banner-feed {
   border-radius: 12px;
   padding: 16px;
@@ -1035,8 +980,6 @@ body {
   border-color: rgba(255, 214, 10, 0.2);
 }
 .yellow-feed .feed-badge { color: var(--accent-yellow); }
-
-/* Chatbot Interface */
 .chatbot-wrapper {
   position: fixed;
   bottom: 24px;
@@ -1190,8 +1133,6 @@ body {
 .btn-icon-send:hover {
   background: var(--accent-primary-hover);
 }
-
-/* Modal UI */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1305,8 +1246,6 @@ body {
 .hidden {
   display: none !important;
 }
-
-/* Map specific sizes */
 .leaflet-container {
   background: #111522 !important;
 }
@@ -1335,8 +1274,6 @@ body {
 .marker-inner.medical { background: #ff453a; }
 .marker-inner.shelter { background: #a2845e; border-radius: 4px; }
 .marker-inner.hospital { background: #34c759; }
-
-/* Responsive adjustments */
 @media (max-width: 1024px) {
   .content-container {
     grid-template-columns: 1fr;
