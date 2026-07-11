@@ -1,10 +1,7 @@
-// LifeBridge AI Emergency Assistant - Application Logic
-
-// Local State
 let state = {
   isOffline: false,
   activeTab: 'panel-map',
-  coords: { lat: 13.0827, lng: 80.2707 }, // Default: Chennai, India (disaster prone zone)
+  coords: { lat: 13.0827, lng: 80.2707 }, 
   hazards: [],
   registry: [],
   supplies: [],
@@ -12,8 +9,6 @@ let state = {
   triageCases: [],
   chatLanguage: 'en'
 };
-
-// Mock Shelters & Hospitals (Initial Data)
 const initialShelters = [
   { id: 's1', name: 'Chennai Central High School Shelter', lat: 13.0850, lng: 80.2680, capacity: '120/150 (80% Full)', phone: '044-25360771' },
   { id: 's2', name: 'Ripon Palace Relief Camp', lat: 13.0881, lng: 80.2730, capacity: '45/200 (22% Full)', phone: '044-25381330' },
@@ -25,22 +20,16 @@ const initialHospitals = [
   { id: 'h2', name: 'Mylapore Government Hospital', lat: 13.0298, lng: 80.2635, waitTime: '45 mins', phone: '044-24935471' }
 ];
 
-// Leaflet Map Variables
 let map = null;
 let tileLayer = null;
 let mapMarkers = [];
 let routeLine = null;
 
-// Audio Context for Morse SOS Beacon
 let audioCtx = null;
 let sirenIntervalId = null;
 let isSirenActive = false;
-
-// Triage Questionnaire State Machine
 let currentTriageData = {};
 let triageStepAnswers = {};
-
-// Intent matching corpus for Chatbot
 const chatbotCorpus = {
   en: [
     { keywords: ['shelter', 'refuge', 'stay', 'camp'], response: 'Nearest Shelter: Chennai Central High School Shelter (80% full, Call 044-25360771) or Ripon Palace Relief Camp (22% full). You can check the map dashboard for live occupancy!' },
@@ -61,9 +50,7 @@ const chatbotCorpus = {
   ]
 };
 
-// Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
-  // Register Service Worker for PWA offline-first functionality
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js')
       .then(reg => console.log('Service Worker registered successfully:', reg.scope))
@@ -81,14 +68,11 @@ document.addEventListener('DOMContentLoaded', () => {
   initChatbot();
   initSyncModal();
   updateDashboardStats();
-  
-  // Initialize Lucide Icons
   if (typeof lucide !== 'undefined') {
     lucide.createIcons();
   }
 });
 
-// Load / Save Local State
 function loadState() {
   const savedState = localStorage.getItem('lifebridge_state');
   if (savedState) {
@@ -115,8 +99,6 @@ function saveState() {
   }));
   updateDashboardStats();
 }
-
-// Update clock and simulate GPS
 function initClock() {
   const updateTime = () => {
     const timeEl = document.getElementById('live-clock');
@@ -127,8 +109,6 @@ function initClock() {
   };
   setInterval(updateTime, 1000);
   updateTime();
-
-  // Network offline detector
   window.addEventListener('online', () => setOnlineState(true));
   window.addEventListener('offline', () => setOnlineState(false));
 
@@ -152,8 +132,6 @@ function setOnlineState(online) {
     simulateBtn.innerHTML = '<i data-lucide="wifi-off"></i> Simulate Offline';
     modeBadge.className = "badge map-badge-online";
     modeBadge.textContent = "Live Tiles";
-    
-    // Show live map
     leafletDiv.classList.remove('hidden');
     fallbackDiv.classList.add('hidden');
     
@@ -166,8 +144,6 @@ function setOnlineState(online) {
     simulateBtn.innerHTML = '<i data-lucide="wifi"></i> Go Online';
     modeBadge.className = "badge map-badge-offline";
     modeBadge.textContent = "Offline Grid";
-    
-    // Hide live map tiles, show canvas
     leafletDiv.classList.add('hidden');
     fallbackDiv.classList.remove('hidden');
     drawOfflineCanvas();
@@ -176,8 +152,6 @@ function setOnlineState(online) {
     lucide.createIcons();
   }
 }
-
-// Navigation Tabs
 function initNavigation() {
   const tabs = document.querySelectorAll('.nav-tab');
   tabs.forEach(tab => {
@@ -195,8 +169,6 @@ function initNavigation() {
       if (targetPanel) {
         targetPanel.classList.add('active');
       }
-      
-      // Recenter or redraw map when switching back to Map Dashboard
       if (target === 'panel-map') {
         if (!state.isOffline && map) {
           setTimeout(() => map.invalidateSize(), 150);
@@ -207,14 +179,10 @@ function initNavigation() {
     });
   });
 }
-
-// Dashboard statistics
 function updateDashboardStats() {
   document.getElementById('count-sos').textContent = state.hazards.filter(h => h.type === 'Medical Emergency').length + state.triageCases.filter(t => t.status === 'RED').length;
   document.getElementById('count-hazards').textContent = state.hazards.length;
   document.getElementById('count-safe').textContent = state.registry.filter(r => r.status === 'Safe' || r.status === 'Evacuated').length;
-  
-  // Render shelter list
   const shelterList = document.getElementById('shelter-list');
   if (shelterList) {
     shelterList.innerHTML = '';
@@ -235,28 +203,18 @@ function updateDashboardStats() {
     });
   }
 }
-
-// Interactive Map Engine (Leaflet + Offline Fallback)
 function initMap() {
-  // Check if map container exists
   if (!document.getElementById('map')) return;
-
-  // Initialize Leaflet Map
   map = L.map('map').setView([state.coords.lat, state.coords.lng], 13);
 
-  // Dark Map Voyager tiles
   tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
     subdomains: 'abcd',
     maxZoom: 20
   }).addTo(map);
-
-  // Click on map to select coordinates for hazard pin or triage details
   map.on('click', (e) => {
     updateSelectedCoordinates(e.latlng.lat, e.latlng.lng);
   });
-
-  // Recenter controls
   document.getElementById('btn-recenter').addEventListener('click', () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((position) => {
@@ -267,7 +225,6 @@ function initMap() {
           map.setView([lat, lng], 14);
         }
       }, () => {
-        // Fallback to default Chennai coordinates if GPS blocked
         updateSelectedCoordinates(state.coords.lat, state.coords.lng);
         if (map && !state.isOffline) {
           map.setView([state.coords.lat, state.coords.lng], 13);
@@ -275,14 +232,10 @@ function initMap() {
       });
     }
   });
-
-  // Map retry button offline
   document.getElementById('btn-retry-tiles').addEventListener('click', () => {
     state.isOffline = false;
     setOnlineState(true);
   });
-
-  // Load initial markers
   renderMapMarkers();
 }
 
@@ -292,26 +245,19 @@ function updateSelectedCoordinates(lat, lng) {
   
   document.getElementById('val-lat').textContent = lat.toFixed(5);
   document.getElementById('val-lng').textContent = lng.toFixed(5);
-  
-  // Update SOS Form inputs
   const latInput = document.getElementById('hazard-lat');
   const lngInput = document.getElementById('hazard-lng');
   if (latInput && lngInput) {
     latInput.value = lat.toFixed(6);
     lngInput.value = lng.toFixed(6);
   }
-  
-  // If offline draw canvas again
   if (state.isOffline) {
     drawOfflineCanvas();
   }
 }
-
-// Render dynamic elements on Map
 function renderMapMarkers() {
   if (!map) return;
 
-  // Clear existing markers
   mapMarkers.forEach(m => map.removeLayer(m));
   mapMarkers = [];
 
@@ -319,8 +265,6 @@ function renderMapMarkers() {
     map.removeLayer(routeLine);
     routeLine = null;
   }
-
-  // Define custom marker icons
   const createCustomIcon = (type) => {
     const typeClass = type.toLowerCase().replace(/[^a-z]/g, '');
     return L.divIcon({
@@ -330,8 +274,6 @@ function renderMapMarkers() {
       iconAnchor: [12, 12]
     });
   };
-
-  // Add shelters
   initialShelters.forEach(s => {
     const marker = L.marker([s.lat, s.lng], { icon: createCustomIcon('shelter') })
       .bindPopup(`<b>🏠 Shelter: ${s.name}</b><br>Capacity: ${s.capacity}<br>Phone: ${s.phone}`)
@@ -339,7 +281,6 @@ function renderMapMarkers() {
     mapMarkers.push(marker);
   });
 
-  // Add hospitals
   initialHospitals.forEach(h => {
     const marker = L.marker([h.lat, h.lng], { icon: createCustomIcon('hospital') })
       .bindPopup(`<b>🏥 Hospital: ${h.name}</b><br>Wait Time: ${h.waitTime}<br>Phone: ${h.phone}`)
@@ -347,7 +288,6 @@ function renderMapMarkers() {
     mapMarkers.push(marker);
   });
 
-  // Add hazards
   state.hazards.forEach(h => {
     const marker = L.marker([h.lat, h.lng], { icon: createCustomIcon(h.type) })
       .bindPopup(`<b>🚨 Hazard: ${h.type}</b><br>${h.desc}<br><small>Reported by Mesh Node</small>`)
@@ -355,7 +295,6 @@ function renderMapMarkers() {
     mapMarkers.push(marker);
   });
 
-  // Add triage cases
   state.triageCases.forEach(t => {
     if (t.lat && t.lng) {
       const marker = L.marker([t.lat, t.lng], { icon: createCustomIcon('medical') })
@@ -364,30 +303,21 @@ function renderMapMarkers() {
       mapMarkers.push(marker);
     }
   });
-
-  // Auto-fit bounds if we have markers and map is visible
   if (mapMarkers.length > 0 && !state.isOffline) {
     const group = new L.featureGroup(mapMarkers);
     map.fitBounds(group.getBounds().pad(0.1));
   }
 }
 
-// Draw Offline Fallback Grid on Canvas
 function drawOfflineCanvas() {
   const canvas = document.getElementById('fallback-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  
-  // Set dimensions based on viewport container size
   const parent = canvas.parentElement;
   canvas.width = parent.clientWidth;
   canvas.height = parent.clientHeight;
-
-  // Clear Canvas
   ctx.fillStyle = '#0f172a';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Draw Grid Lines (simulated latitude/longitude)
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
   ctx.lineWidth = 1;
 
@@ -404,8 +334,6 @@ function drawOfflineCanvas() {
     ctx.lineTo(canvas.width, y);
     ctx.stroke();
   }
-
-  // Draw Radar concentric circles representing GPS locate center
   ctx.strokeStyle = 'rgba(10, 132, 255, 0.15)';
   ctx.lineWidth = 2;
   const cx = canvas.width / 2;
@@ -423,7 +351,6 @@ function drawOfflineCanvas() {
   ctx.arc(cx, cy, 150, 0, 2 * Math.PI);
   ctx.stroke();
 
-  // Draw target cursor
   ctx.fillStyle = '#0a84ff';
   ctx.beginPath();
   ctx.arc(cx, cy, 6, 0, 2 * Math.PI);
@@ -434,12 +361,12 @@ function drawOfflineCanvas() {
   ctx.arc(cx, cy, 20, 0, 2 * Math.PI);
   ctx.fill();
 
-  // Draw offline hazard indicators
+
   ctx.fillStyle = 'rgba(255, 69, 58, 0.8)';
   
-  // Render points
+
   const drawVectorMarker = (lat, lng, name, color) => {
-    // Math scaling: Chennai lat/lng relative offset
+
     const dx = (lng - state.coords.lng) * 800 + cx;
     const dy = -(lat - state.coords.lat) * 800 + cy;
 
@@ -460,18 +387,17 @@ function drawOfflineCanvas() {
     }
   };
 
-  // Plot shelters
   initialShelters.forEach(s => drawVectorMarker(s.lat, s.lng, '🏠 ' + s.name.substring(0, 12), '#a2845e'));
-  // Plot hospitals
+
   initialHospitals.forEach(h => drawVectorMarker(h.lat, h.lng, '🏥 ' + h.name.substring(0, 12), '#34c759'));
-  // Plot custom hazards
+
   state.hazards.forEach(h => {
     let color = '#ff9f0a';
     if (h.type === 'Medical Emergency') color = '#ff453a';
     drawVectorMarker(h.lat, h.lng, '⚠️ ' + h.type, color);
   });
   
-  // Plot triage patients
+
   state.triageCases.forEach(t => {
     if (t.lat && t.lng) {
       drawVectorMarker(t.lat, t.lng, '🩺 ' + t.name.substring(0, 10), '#ff453a');
@@ -479,7 +405,7 @@ function drawOfflineCanvas() {
   });
 }
 
-// Morse Code SOS Audio Beacon
+
 function initSirenBeacon() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -489,11 +415,9 @@ function initSirenBeacon() {
 function playMorseSOS() {
   if (!audioCtx) return;
   
-  // Standard Morse SOS timings in seconds
-  // Dit = 0.1s, Dah = 0.3s, intra-letter gap = 0.1s, inter-letter gap = 0.3s
   const dit = 0.1;
   const dah = 0.3;
-  const frequency = 880; // High pitch 880Hz alert tone
+  const frequency = 880; 
 
   const sequence = [
     { type: 'sound', dur: dit }, // S
@@ -546,8 +470,6 @@ function playMorseSOS() {
 
   oscillator.start();
   oscillator.stop(timeOffset);
-  
-  // Flash Screen Border during sound play
   triggerVisualFlash(timeOffset - audioCtx.currentTime);
 }
 
@@ -560,8 +482,6 @@ function triggerVisualFlash(durationSeconds) {
     }, durationSeconds * 1000);
   }
 }
-
-// SOS Siren toggle button click
 const sirenBtn = document.getElementById('btn-siren-toggle');
 if (sirenBtn) {
   sirenBtn.addEventListener('click', () => {
@@ -576,11 +496,9 @@ if (sirenBtn) {
       isSirenActive = true;
       sirenBtn.className = "btn btn-dark btn-large w-full active-siren";
       sirenBtn.innerHTML = '<span class="siren-pulse-icon"><i data-lucide="square"></i></span> DEACTIVATE BEACON';
-      
-      // Play Morse SOS immediately
+    
       playMorseSOS();
       
-      // Loop every 3.2 seconds (total duration of Morse sequence + cycle gap)
       sirenIntervalId = setInterval(() => {
         playMorseSOS();
       }, 3200);
@@ -592,7 +510,6 @@ if (sirenBtn) {
   });
 }
 
-// SOS Form submission (Drop marker)
 const hazardForm = document.getElementById('form-hazard-pin');
 if (hazardForm) {
   hazardForm.submitHandler = hazardForm.addEventListener('submit', (e) => {
@@ -615,16 +532,10 @@ if (hazardForm) {
     state.hazards.push(newHazard);
     saveState();
     renderMapMarkers();
-    
-    // Clear description fields
     document.getElementById('hazard-description').value = '';
-    
-    // Auto switch back to map dashboard
     document.querySelector('[data-target="panel-map"]').click();
   });
 }
-
-// S.T.A.R.T. Triage Diagnostic Wizard
 function initTriageWizard() {
   document.getElementById('triage-start-btn').addEventListener('click', () => {
     const nameVal = document.getElementById('triage-name').value;
@@ -638,12 +549,10 @@ function initTriageWizard() {
     currentTriageData = {
       name: nameVal,
       location: locVal || 'Unspecified location',
-      lat: state.coords.lat + (Math.random() - 0.5) * 0.005, // simulated offset near center
+      lat: state.coords.lat + (Math.random() - 0.5) * 0.005,
       lng: state.coords.lng + (Math.random() - 0.5) * 0.005
     };
     triageStepAnswers = {};
-    
-    // Proceed to Step 1
     showTriageStep(1);
   });
 
@@ -659,8 +568,7 @@ function initTriageWizard() {
     };
     
     state.triageCases.push(newCase);
-    
-    // Also push to citizens safety directory as injured or deceased/safe based on status
+  
     let safetyStatus = 'Injured';
     if (newCase.status === 'BLACK') safetyStatus = 'Missing';
     if (newCase.status === 'GREEN') safetyStatus = 'Safe';
@@ -678,8 +586,7 @@ function initTriageWizard() {
     renderMapMarkers();
     renderTriageLogs();
     renderRegistry();
-    
-    // Reset wizard
+
     document.getElementById('triage-name').value = '';
     document.getElementById('triage-location').value = '';
     showTriageStep(0);
@@ -715,60 +622,53 @@ window.setTriageAnswer = function(question, answer) {
   
   if (question === 'walk') {
     if (answer === true) {
-      // Walk Yes -> Green (Minor)
       evaluateTriageResult('GREEN');
     } else {
-      // Walk No -> Check Breathing
+
       showTriageStep(2);
     }
   } 
   
   else if (question === 'breathing') {
     if (answer === 'yes') {
-      // Breathing Yes -> Check Respiratory Rate
+
       showTriageStep(3);
     } else {
-      // Breathing No -> Reposition Airway
+
       showTriageStep('2b');
     }
   } 
   
   else if (question === 'airway_breathing') {
     if (answer === true) {
-      // Resumes -> Red (Immediate)
       evaluateTriageResult('RED');
     } else {
-      // Still No -> Black (Expectant / Deceased)
+
       evaluateTriageResult('BLACK');
     }
   } 
   
   else if (question === 'rate') {
     if (answer === 'over_30') {
-      // > 30 bpm -> Red (Immediate)
       evaluateTriageResult('RED');
     } else {
-      // < 30 bpm -> Check Perfusion
+
       showTriageStep(4);
     }
   } 
   
   else if (question === 'perfusion') {
     if (answer === 'failed') {
-      // Failed Perfusion -> Red (Immediate)
       evaluateTriageResult('RED');
     } else {
-      // Normal Perfusion -> Check Mental Status
       showTriageStep(5);
     }
   } 
   
   else if (question === 'mental') {
     if (answer === 'failed') {
-      // Cannot follow commands -> Red (Immediate)
       evaluateTriageResult('RED');
     } else {
-      // Can follow commands -> Yellow (Delayed)
       evaluateTriageResult('YELLOW');
     }
   }
@@ -826,10 +726,8 @@ function renderTriageLogs() {
     logList.appendChild(item);
   });
 }
-
-// Resource & Volunteer Ledger with Auto-Matching
 function initLedger() {
-  // Inner Tab switching
+
   const innerTabs = document.querySelectorAll('[data-ledger-tab]');
   innerTabs.forEach(tab => {
     tab.addEventListener('click', () => {
@@ -847,7 +745,7 @@ function initLedger() {
     });
   });
 
-  // Supply submit
+
   const supplyForm = document.getElementById('form-supply');
   if (supplyForm) {
     supplyForm.addEventListener('submit', (e) => {
@@ -872,14 +770,14 @@ function initLedger() {
       saveState();
       renderSuppliesList();
       
-      // Clear fields
+
       document.getElementById('supply-qty').value = '';
       document.getElementById('supply-contact').value = '';
       document.getElementById('supply-details').value = '';
     });
   }
 
-  // Volunteer submit
+
   const volForm = document.getElementById('form-volunteer');
   if (volForm) {
     volForm.addEventListener('submit', (e) => {
@@ -975,7 +873,6 @@ function renderVolunteersList() {
   });
 }
 
-// Auto-matchmaking logic
 function runResourceMatchmaker() {
   const container = document.getElementById('matchmaker-results');
   if (!container) return;
@@ -988,7 +885,6 @@ function runResourceMatchmaker() {
   let matchesCount = 0;
   
   requests.forEach(req => {
-    // Find compatible offer
     const compatible = offers.find(off => off.item === req.item);
     if (compatible) {
       matchesCount++;
@@ -1021,14 +917,14 @@ function runResourceMatchmaker() {
   }
 }
 
-// Visual routing line on map
+
 window.triggerP2PRoute = function(reqId, offId) {
   const req = state.supplies.find(s => s.id === reqId);
   const off = state.supplies.find(s => s.id === offId);
   
   if (!req || !off) return;
   
-  // Create virtual locations for matching (simulated offsets from Chennai center)
+
   const reqLat = state.coords.lat - 0.005;
   const reqLng = state.coords.lng + 0.005;
   
@@ -1036,7 +932,7 @@ window.triggerP2PRoute = function(reqId, offId) {
   const offLng = state.coords.lng - 0.004;
 
   if (map && !state.isOffline) {
-    // Draw Leaflet polyline
+
     if (routeLine) {
       map.removeLayer(routeLine);
     }
@@ -1051,15 +947,15 @@ window.triggerP2PRoute = function(reqId, offId) {
     
     map.setView([state.coords.lat, state.coords.lng], 13);
     
-    // Switch to Map panel
+ 
     document.querySelector('[data-target="panel-map"]').click();
   } else if (state.isOffline) {
-    // Offline Canvas route drawing fallback
+
     alert(`Mesh route established offline! Routing supplies between nodes ${req.contact} and ${off.contact}.`);
   }
 };
 
-// Safety Registry & Missing Persons Board
+
 function initRegistry() {
   const searchInput = document.getElementById('registry-search');
   if (searchInput) {
@@ -1090,8 +986,7 @@ function initRegistry() {
       
       saveState();
       renderRegistry();
-      
-      // Clear inputs
+
       document.getElementById('reg-name').value = '';
       document.getElementById('reg-phone').value = '';
       document.getElementById('reg-details').value = '';
@@ -1126,14 +1021,11 @@ function renderRegistry(query = '') {
   filtered.slice().reverse().forEach(r => {
     const item = document.createElement('div');
     item.className = 'list-card-item';
-    
-    // Choose status badge colors
+
     let badgeClass = 'GREEN';
     if (r.status === 'Missing') badgeClass = 'RED';
     if (r.status === 'Injured') badgeClass = 'YELLOW';
     if (r.status === 'Evacuated') badgeClass = 'BLACK';
-
-    // Avatar map
     let avatarSymbol = '👤';
     if (r.avatar === 'avatar1') avatarSymbol = '👨';
     if (r.avatar === 'avatar2') avatarSymbol = '👩';
@@ -1158,7 +1050,6 @@ function renderRegistry(query = '') {
   });
 }
 
-// Survival Guide Swiper
 function initGuides() {
   const guideBtns = document.querySelectorAll('.btn-guide-nav');
   guideBtns.forEach(btn => {
@@ -1174,7 +1065,6 @@ function initGuides() {
   });
 }
 
-// Bilingual Offline Chatbot
 function initChatbot() {
   const header = document.getElementById('chatbot-header-toggle');
   const wrapper = document.getElementById('chatbot-container');
@@ -1193,8 +1083,6 @@ function initChatbot() {
       }
     });
   }
-
-  // Suggestion chips handler
   const chips = document.querySelectorAll('.chip-item');
   chips.forEach(chip => {
     chip.addEventListener('click', () => {
@@ -1204,7 +1092,6 @@ function initChatbot() {
     });
   });
 
-  // Lang switchers
   const btnEn = document.getElementById('btn-lang-en');
   const btnHi = document.getElementById('btn-lang-hi');
   const inputEl = document.getElementById('chat-input');
@@ -1235,12 +1122,8 @@ function initChatbot() {
       const input = document.getElementById('chat-input');
       const query = input.value.trim();
       if (query === '') return;
-      
-      // Append user msg
       appendChatMessage(query, 'user');
       input.value = '';
-      
-      // Local processing delay (feels natural)
       setTimeout(() => {
         const response = matchLocalIntent(query, state.chatLanguage);
         appendChatMessage(response, 'bot');
@@ -1278,8 +1161,6 @@ function appendChatMessage(text, sender) {
 function matchLocalIntent(query, lang) {
   const cleanQ = query.toLowerCase();
   const corpus = chatbotCorpus[lang] || chatbotCorpus['en'];
-  
-  // Find match
   const matched = corpus.find(item => {
     return item.keywords.some(k => cleanQ.includes(k));
   });
@@ -1294,8 +1175,6 @@ function matchLocalIntent(query, lang) {
     return 'I could not find exact info offline. Try terms like: "shelter", "flood", "cpr", "earthquake", "cyclone", or "burn".';
   }
 }
-
-// QR Code P2P Sync Hub
 let qrObject = null;
 function initSyncModal() {
   const modal = document.getElementById('sync-modal');
@@ -1313,7 +1192,6 @@ function initSyncModal() {
     });
   }
 
-  // QR sub tabs
   const tabGen = document.getElementById('tab-qr-generate');
   const tabScan = document.getElementById('tab-qr-scan');
   
@@ -1333,17 +1211,15 @@ function initSyncModal() {
     });
   }
 
-  // Refresh QR
+
   document.getElementById('btn-refresh-qr').addEventListener('click', () => {
     generateSyncQR();
   });
 
-  // Simulated scan import
   document.getElementById('btn-simulate-scan').addEventListener('click', () => {
     simulateQRImport();
   });
   
-  // File upload sync package
   const fileInput = document.getElementById('qr-file-input');
   document.getElementById('btn-upload-qr').addEventListener('click', () => {
     fileInput.click();
@@ -1376,17 +1252,15 @@ function generateSyncQR() {
     volunteers: state.volunteers,
     triageCases: state.triageCases
   };
-  
-  // Convert payload to compact JSON string
   const serialized = JSON.stringify(syncPayload);
   
   const container = document.getElementById('qrcode-container');
   if (container) {
     container.innerHTML = '';
-    // Instantiate QRCode.js
+   
     try {
       new QRCode(container, {
-        text: serialized.substring(0, 1500), // Clamp length for QR capacity limits
+        text: serialized.substring(0, 1500), 
         width: 140,
         height: 140,
         colorDark : "#080c15",
@@ -1394,14 +1268,12 @@ function generateSyncQR() {
         correctLevel : QRCode.CorrectLevel.M
       });
     } catch (e) {
-      // Fallback message if string exceeds size
       container.innerHTML = '<div class="text-small text-muted p-4">Sync payload compiled! Ready for Satellite Sync.</div>';
     }
   }
 }
 
 function simulateQRImport() {
-  // Pre-configured mock data representing another responder's node logs
   const mockSyncData = {
     hazards: [
       { id: 'haz_mock_1', type: 'Flooding', desc: 'Water levels rising to 4ft in Mylapore Subway', lat: 13.028, lng: 80.264, timestamp: '11:15 AM' },
@@ -1429,7 +1301,6 @@ function simulateQRImport() {
 }
 
 function mergeSyncState(incoming) {
-  // Merge items based on IDs preventing duplicates
   const mergeLists = (existing, incomingList) => {
     if (!incomingList) return existing;
     const existingIds = new Set(existing.map(item => item.id));
