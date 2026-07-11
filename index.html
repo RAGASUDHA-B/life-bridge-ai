@@ -4,25 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LifeBridge AI - Emergency Crisis Command Center</title>
-  
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- Leaflet Map CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  
-  <!-- Application CSS -->
   <link rel="stylesheet" href="index.css">
-  
-  <!-- App Manifest for PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#090d16">
 </head>
 <body>
-
-  <!-- Top Glassmorphic Navigation -->
   <header class="app-header">
     <div class="logo-container">
       <div class="pulse-ring"></div>
@@ -31,28 +21,19 @@
     </div>
     
     <div class="header-controls">
-      <!-- Network State Indicator -->
       <div id="network-status" class="status-indicator online">
         <span class="status-dot"></span>
         <span class="status-text">ONLINE</span>
       </div>
-      
-      <!-- Offline Simulator Toggle -->
       <button id="toggle-network-btn" class="btn btn-secondary btn-small">
         <i data-lucide="wifi-off"></i> Simulate Offline
       </button>
-      
-      <!-- QR P2P Sync Trigger -->
       <button id="trigger-sync-btn" class="btn btn-primary btn-small">
         <i data-lucide="qr-code"></i> Sync Mesh
       </button>
     </div>
   </header>
-
-  <!-- Main Workspace Grid -->
   <main class="app-layout">
-    
-    <!-- Sidebar Navigation Tabs -->
     <nav class="sidebar-nav">
       <button class="nav-tab active" data-target="panel-map">
         <i data-lucide="map"></i>
@@ -83,11 +64,7 @@
         <span>Weather Feeds</span>
       </button>
     </nav>
-
-    <!-- Content Workspace -->
     <div class="content-container">
-      
-      <!-- Left Column: Map Engine -->
       <section class="map-section card">
         <div class="card-header map-header">
           <div class="header-left">
@@ -101,10 +78,9 @@
         </div>
         
         <div class="map-view-wrapper">
-          <!-- Leaflet Map Container -->
           <div id="map"></div>
           
-          <!-- Offline Vector Fallback Canvas -->
+    
           <div id="offline-map-fallback" class="hidden">
             <canvas id="fallback-canvas"></canvas>
             <div class="fallback-overlay">
@@ -114,8 +90,6 @@
               <button id="btn-retry-tiles" class="btn btn-secondary btn-small">Retry Live Tiles</button>
             </div>
           </div>
-          
-          <!-- Coordinates Overlay -->
           <div class="map-coords-overlay">
             <span>Lat: <strong id="val-lat">20.5937</strong></span>
             <span>Lng: <strong id="val-lng">78.9629</strong></span>
@@ -123,11 +97,7 @@
           </div>
         </div>
       </section>
-
-      <!-- Right Column: Interactive Panels -->
       <section class="panel-section">
-        
-        <!-- Panel 1: Map Dashboard Summary (default overlay, is coupled with panel-map tab) -->
         <div id="panel-map" class="tab-panel active">
           <div class="card panel-card">
             <div class="card-header">
@@ -167,15 +137,13 @@
                 <div class="shelter-list-container scrollable-list mt-3">
                   <h5>Nearby Shelters & Capacities</h5>
                   <div class="list-items" id="shelter-list">
-                    <!-- Dynamic shelter items -->
+        
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Panel 2: SOS & Siren -->
         <div id="panel-sos" class="tab-panel">
           <div class="card panel-card">
             <div class="card-header header-sos">
@@ -184,23 +152,18 @@
             </div>
             
             <div class="card-body">
-              <!-- Audio Siren Sub-Panel -->
               <div class="beacon-audio-control card-nested">
                 <h3><i data-lucide="volume-2"></i> Emergency Morse-SOS Siren</h3>
                 <p class="text-muted text-small">Emits a high-frequency 880Hz audio sound in standard Morse code (...---...) to alert nearby rescue teams under rubble or low visibility.</p>
-                
                 <div class="control-actions mt-3">
                   <button id="btn-siren-toggle" class="btn btn-danger btn-large w-full">
                     <span class="siren-pulse-icon"><i data-lucide="radio"></i></span> Activate Morse Siren
                   </button>
                 </div>
-                
                 <div id="siren-flash-screen" class="hidden-flash">
                   <div class="flash-text">SOS BEACON ACTIVE</div>
                 </div>
               </div>
-
-              <!-- SOS GPS Drop Signal -->
               <div class="beacon-gps-control mt-4">
                 <h3><i data-lucide="map-pin"></i> Broadcast Local Hazard Pin</h3>
                 <p class="text-small">Broadcast your current coordinates to the shared P2P mesh network database.</p>
@@ -239,8 +202,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Panel 3: START Triage Diagnostic Wizard -->
         <div id="panel-triage" class="tab-panel">
           <div class="card panel-card">
             <div class="card-header">
@@ -250,11 +211,8 @@
             
             <div class="card-body">
               <p class="text-muted text-small mb-3">Simple Triage and Rapid Treatment protocol is used by emergency responders to quickly classify victims in mass-casualty incidents.</p>
-              
-              <!-- Triage Wizard Flow -->
               <div id="triage-wizard-container" class="card-nested">
-                
-                <!-- Step 0: Patient Details -->
+  
                 <div class="triage-step active" id="triage-step-0">
                   <h4>Step 1: Record Victim Details</h4>
                   <div class="form-group mt-3">
@@ -268,7 +226,6 @@
                   <button id="triage-start-btn" class="btn btn-primary w-full mt-3">Begin Diagnostic Questionnaire</button>
                 </div>
 
-                <!-- Step 1: Ability to Walk -->
                 <div class="triage-step" id="triage-step-1" style="display:none;">
                   <h4>Is the patient able to walk?</h4>
                   <div class="triage-graphic"><i data-lucide="footprints" class="step-icon"></i></div>
@@ -278,7 +235,6 @@
                   </div>
                 </div>
 
-                <!-- Step 2: Respiration check -->
                 <div class="triage-step" id="triage-step-2" style="display:none;">
                   <h4>Is the patient breathing?</h4>
                   <div class="triage-graphic"><i data-lucide="wind" class="step-icon"></i></div>
@@ -287,8 +243,6 @@
                     <button class="btn btn-secondary btn-wizard" onclick="setTriageAnswer('breathing', 'no')">No</button>
                   </div>
                 </div>
-
-                <!-- Step 2b: Airway positioning check -->
                 <div class="triage-step" id="triage-step-2b" style="display:none;">
                   <h4>Reposition airway. Does breathing begin?</h4>
                   <div class="triage-graphic"><i data-lucide="shield-alert" class="step-icon"></i></div>
@@ -297,8 +251,6 @@
                     <button class="btn btn-dark btn-wizard" onclick="setTriageAnswer('airway_breathing', false)">No</button>
                   </div>
                 </div>
-
-                <!-- Step 3: Respiration Rate -->
                 <div class="triage-step" id="triage-step-3" style="display:none;">
                   <h4>What is the respiratory rate?</h4>
                   <div class="triage-graphic"><i data-lucide="gauge" class="step-icon"></i></div>
@@ -308,7 +260,6 @@
                   </div>
                 </div>
 
-                <!-- Step 4: Perfusion / Pulse check -->
                 <div class="triage-step" id="triage-step-4" style="display:none;">
                   <h4>Perfusion: Check radial pulse or Capillary refill.</h4>
                   <p class="text-small text-muted text-center mt-2">Is capillary refill > 2 seconds or is the radial pulse absent?</p>
@@ -318,8 +269,6 @@
                     <button class="btn btn-primary btn-wizard" onclick="setTriageAnswer('perfusion', 'passed')">Normal Pulse / < 2s Refill</button>
                   </div>
                 </div>
-
-                <!-- Step 5: Mental Status check -->
                 <div class="triage-step" id="triage-step-5" style="display:none;">
                   <h4>Mental Status: Can patient follow simple commands?</h4>
                   <p class="text-small text-muted text-center mt-2">E.g., "Squeeze my hand" or "Close your eyes".</p>
@@ -330,7 +279,6 @@
                   </div>
                 </div>
 
-                <!-- Step 6: Results -->
                 <div class="triage-step" id="triage-step-result" style="display:none;">
                   <h4>Diagnostic Classification</h4>
                   
@@ -347,19 +295,14 @@
                 </div>
 
               </div>
-
-              <!-- Saved Triage Cases -->
               <div class="triage-log-section mt-4">
                 <h5>Active Field Triage Log</h5>
                 <div id="triage-log-list" class="scrollable-list mt-2">
-                  <!-- Dynamic triage cards -->
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Panel 4: Supply & Volunteer Ledger -->
         <div id="panel-ledger" class="tab-panel">
           <div class="card panel-card">
             <div class="card-header">
@@ -368,14 +311,11 @@
             </div>
             
             <div class="card-body">
-              <!-- Tab toggles within Ledger -->
               <div class="inner-tabs mb-3">
                 <button class="inner-tab active" data-ledger-tab="ledger-supplies">Supplies Request/Offer</button>
                 <button class="inner-tab" data-ledger-tab="ledger-volunteers">Volunteers & Tasks</button>
                 <button class="inner-tab" data-ledger-tab="ledger-matchmaker">Auto-Matchmaker</button>
               </div>
-
-              <!-- Supplies Ledger -->
               <div id="ledger-supplies" class="ledger-tab-panel active">
                 <form id="form-supply">
                   <div class="form-row">
@@ -420,12 +360,9 @@
                 <div class="scrollable-list mt-4">
                   <h5>Active Resource Ledger</h5>
                   <div id="supply-list-items" class="list-items">
-                    <!-- Dynamic supply cards -->
                   </div>
                 </div>
               </div>
-
-              <!-- Volunteers & Tasks Ledger -->
               <div id="ledger-volunteers" class="ledger-tab-panel" style="display:none;">
                 <form id="form-volunteer">
                   <div class="form-row">
@@ -464,12 +401,9 @@
                 <div class="scrollable-list mt-4">
                   <h5>Registered Field Volunteers</h5>
                   <div id="vol-list-items" class="list-items">
-                    <!-- Dynamic volunteers -->
                   </div>
                 </div>
               </div>
-
-              <!-- Resource Matchmaker -->
               <div id="ledger-matchmaker" class="ledger-tab-panel" style="display:none;">
                 <div class="info-alert info-theme">
                   <i data-lucide="cpu"></i>
@@ -480,15 +414,12 @@
                 </div>
 
                 <div id="matchmaker-results" class="mt-3">
-                  <!-- Match results -->
                 </div>
               </div>
 
             </div>
           </div>
         </div>
-
-        <!-- Panel 5: Safety & Missing Persons Registry -->
         <div id="panel-registry" class="tab-panel">
           <div class="card panel-card">
             <div class="card-header">
@@ -500,8 +431,6 @@
               <div class="registry-actions">
                 <input type="text" id="registry-search" placeholder="🔍 Search name, status, or phone..." class="form-input w-full">
               </div>
-
-              <!-- Quick Registration Form -->
               <div class="quick-reg-box card-nested mt-3">
                 <h4><i data-lucide="user-check"></i> Register Citizen Status</h4>
                 <form id="form-registry">
@@ -549,14 +478,11 @@
               <div class="scrollable-list mt-4">
                 <h5>Safety Ledger Directory</h5>
                 <div id="registry-list-items" class="list-items">
-                  <!-- Dynamic registry listings -->
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Panel 6: Survival Guides -->
         <div id="panel-guides" class="tab-panel">
           <div class="card panel-card">
             <div class="card-header">
@@ -575,7 +501,6 @@
               </div>
 
               <div class="guide-viewer mt-3 card-nested scrollable-list">
-                <!-- Guide: First Aid -->
                 <div id="guide-firstaid" class="guide-content active">
                   <h3>🩺 Emergency First Aid Measures</h3>
                   <hr class="guide-divider">
@@ -592,8 +517,6 @@
                     <p>Move victim to shade. Cool them with water mist, wet clothes, and fan them. Give sips of cool water if fully conscious.</p>
                   </div>
                 </div>
-
-                <!-- Guide: Flood -->
                 <div id="guide-flood" class="guide-content" style="display:none;">
                   <h3>🌊 Flood Survival Guidance</h3>
                   <hr class="guide-divider">
@@ -610,8 +533,6 @@
                     <p>Do not drink tap water. Drink boiled or purified water only. Treat any skin contact with sanitizer if possible.</p>
                   </div>
                 </div>
-
-                <!-- Guide: Earthquake -->
                 <div id="guide-earthquake" class="guide-content" style="display:none;">
                   <h3>🏢 Earthquake - Drop, Cover, Hold On</h3>
                   <hr class="guide-divider">
@@ -629,7 +550,6 @@
                   </div>
                 </div>
 
-                <!-- Guide: Cyclone -->
                 <div id="guide-cyclone" class="guide-content" style="display:none;">
                   <h3>🌀 Cyclone Protection Steps</h3>
                   <hr class="guide-divider">
@@ -650,8 +570,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Panel 7: Weather Alerts -->
         <div id="panel-weather" class="tab-panel">
           <div class="card panel-card">
             <div class="card-header">
@@ -663,7 +581,6 @@
               <p class="text-small text-muted mb-3">Simulated real-time crisis broadcast signals fetched from offline satellite transponders.</p>
               
               <div class="weather-alert-feed">
-                <!-- Red Alert -->
                 <div class="alert-banner-feed red-feed">
                   <div class="feed-badge"><i data-lucide="cloud-lightning"></i> RED ALERT</div>
                   <div class="feed-body">
@@ -672,8 +589,6 @@
                     <span class="feed-time">10 mins ago</span>
                   </div>
                 </div>
-
-                <!-- Orange Alert -->
                 <div class="alert-banner-feed orange-feed mt-3">
                   <div class="feed-badge"><i data-lucide="waves"></i> ORANGE ALERT</div>
                   <div class="feed-body">
@@ -682,8 +597,6 @@
                     <span class="feed-time">1 hour ago</span>
                   </div>
                 </div>
-
-                <!-- Yellow Alert -->
                 <div class="alert-banner-feed yellow-feed mt-3">
                   <div class="feed-badge"><i data-lucide="wind"></i> YELLOW ALERT</div>
                   <div class="feed-body">
@@ -701,8 +614,6 @@
 
     </div>
   </main>
-
-  <!-- Collapsible Bilingual AI Chatbot -->
   <div class="chatbot-wrapper collapsed" id="chatbot-container">
     <div class="chatbot-header" id="chatbot-header-toggle">
       <div class="chatbot-header-title">
@@ -713,32 +624,26 @@
     </div>
     
     <div class="chatbot-body">
-      <!-- Lang Toggle -->
+
       <div class="chat-lang-switch mb-2">
         <button id="btn-lang-en" class="btn btn-secondary btn-small active">English</button>
         <button id="btn-lang-hi" class="btn btn-secondary btn-small">हिन्दी (Hindi)</button>
       </div>
-      
-      <!-- Suggestion chips -->
       <div class="suggestion-chips scroll-x" id="chat-suggestion-chips">
-        <!-- English Chips -->
         <span class="chip-item" data-query="Where is the nearest shelter?">Nearest Shelter</span>
         <span class="chip-item" data-query="How to perform CPR?">How to CPR</span>
         <span class="chip-item" data-query="What to do in a flood?">Flood Safety</span>
-        <!-- Hindi Chips (hidden initially) -->
+
         <span class="chip-item hindi-chip hidden" data-query="नजदीकी शेल्टर कहाँ है?">नजदीकी शेल्टर</span>
         <span class="chip-item hindi-chip hidden" data-query="बाढ़ में क्या करें?">बाढ़ में बचाव</span>
         <span class="chip-item hindi-chip hidden" data-query="सीपीआर कैसे दें?">सीपीआर गाइड</span>
       </div>
 
-      <!-- Messages container -->
       <div class="chat-messages-container" id="chat-messages">
         <div class="chat-msg bot">
           <p>Hello! I am your LifeBridge Disaster Assistant. I can operate fully offline to answer first aid, shelter, or crisis guidelines. How can I help you today?</p>
         </div>
       </div>
-
-      <!-- Input box -->
       <form id="chat-form" class="chat-input-row">
         <input type="text" id="chat-input" placeholder="Type emergency query here..." class="form-input">
         <button type="submit" class="btn btn-primary btn-icon-send"><i data-lucide="send"></i></button>
@@ -746,7 +651,6 @@
     </div>
   </div>
 
-  <!-- QR Code P2P Sync Overlay Modal -->
   <div id="sync-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
@@ -761,15 +665,12 @@
           <button class="qr-tab" id="tab-qr-scan">Scan Responder Data</button>
         </div>
 
-        <!-- Generate Tab -->
         <div id="qr-generate-section">
           <div id="qrcode-container" class="qr-display-box">
-            <!-- QR code goes here -->
+
           </div>
           <button id="btn-refresh-qr" class="btn btn-primary mt-3"><i data-lucide="refresh-cw"></i> Refresh Code</button>
         </div>
-
-        <!-- Scan Tab -->
         <div id="qr-scan-section" class="hidden">
           <div class="qr-scanner-box">
             <i data-lucide="scan-line" class="scanning-laser"></i>
@@ -785,16 +686,12 @@
     </div>
   </div>
 
-  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  
-  <!-- QRCode.js Library -->
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nOMdBmdd8ODc9yEQ38QXSO824A35BEXyQlss5k9I9q6A8B5qJv8CoXGScJ3XGOJcRyYLQ29Oc5Jg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  
-  <!-- Leaflet Map JS -->
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  
-  <!-- Application JS -->
+
   <script src="app.js"></script>
 
 </body>
