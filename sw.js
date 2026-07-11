@@ -12,7 +12,6 @@ const ASSETS = [
   'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
 ];
 
-// Install Event - cache all core assets
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -22,7 +21,6 @@ self.addEventListener('install', (e) => {
   );
 });
 
-// Activate Event - clean old caches
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
@@ -38,11 +36,10 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Fetch Event - network first falling back to cache
 self.addEventListener('fetch', (e) => {
   e.respondWith(
     fetch(e.request).then((response) => {
-      // If response is valid, clone and cache it (e.g. dynamic tiles or external requests)
+   
       if (response && response.status === 200 && e.request.url.startsWith('http')) {
         const responseClone = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
@@ -51,16 +48,15 @@ self.addEventListener('fetch', (e) => {
       }
       return response;
     }).catch(() => {
-      // If network fails, serve from cache
+   
       console.log('[Service Worker] Offline - Serving resource from cache:', e.request.url);
       return caches.match(e.request).then((cachedResponse) => {
         if (cachedResponse) {
           return cachedResponse;
         }
-        
-        // If map tiles offline fallback
+
         if (e.request.url.includes('tile.openstreetmap') || e.request.url.includes('basemaps.cartocdn')) {
-          // Serve a generic fallback tile or empty response so leaflet doesn't crash
+
           return new Response(null, { status: 404 });
         }
       });
